@@ -1,0 +1,66 @@
+name: release
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write # Fetch code (actions/checkout), create release
+  packages: write # Upload and publish packages to GitHub Packages
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'mixxxdj/demucs' || github.event_name == 'workflow_dispatch' }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.13
+
+    - uses: actions/cache@v4
+      with:
+        path: env
+        key: build-${{ hashFiles('**/requirements.txt') }}
+
+    - run: |
+        set -eo pipefail
+        echo "VERSION=$(git describe --tags --match "v*" --exclude "*-onnxmodel")-onnxmodel" >> "${GITHUB_ENV}"
+      name: "Prepare"
+
+    - run: |
+        python3 -m venv env
+        . env/bin/activate
+        pip install .
+        pip install onnx onnxruntime
+        ./scripts/convert-pth-to-onnx.py ./output
+      name: Build
+
+    - run: |
+        if ! gh release view --repo "${{ github.repository }}" "${RELEASE_NAME}" &> /dev/null
+        then 
+          gh release create --repo "${{ github.repository }}" "${RELEASE_NAME}" \
+            --generate-notes \
+            --latest \
+            --target "${{ github.sha }}"
+          gh release upload --repo "${{ github.repository }}" "${RELEASE_NAME}" output/htdemucs.onnx
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_NAME: ${{ env.VERSION }}
+      shell: bash
+      if: ${{ github.event_name == 'push' }}
+      id: ghrelease
+      name: "Creates a release in GitHub if it doesn't exist yet"
+
+    - name: Upload GitHub Actions artifacts
+      if: ${{ steps.ghrelease.outcome == 'skipped' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: htdemucs.onnx
+        path: |
+          ./output/htdemucs.onnx

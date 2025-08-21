@@ -12,8 +12,8 @@ mypy
 openunmix
 pyyaml
 submitit
-torch>=1.8.1
-torchaudio>=0.8,<2.2
+torch>=2.1.2
+torchaudio>=2.1.2
 tqdm
 treetable
 soundfile>=0.10.3
