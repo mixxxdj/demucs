@@ -9,7 +9,7 @@ import random
 import subprocess as sp
 import tempfile
 
-from . import audio_legacy
+from . import audio_legacy  # noqa: F401
 import torch
 import torchaudio as ta
 
@@ -20,8 +20,17 @@ class RepitchedWrapper:
     """
     Wrap a dataset to apply online change of pitch / tempo.
     """
-    def __init__(self, dataset, proba=0.2, max_pitch=2, max_tempo=12,
-                 tempo_std=5, vocals=[3], same=True):
+
+    def __init__(
+        self,
+        dataset,
+        proba=0.2,
+        max_pitch=2,
+        max_tempo=12,
+        tempo_std=5,
+        vocals=[3],
+        same=True,
+    ):
         self.dataset = dataset
         self.proba = proba
         self.max_pitch = max_pitch
@@ -46,10 +55,8 @@ class RepitchedWrapper:
                     delta_tempo = random.gauss(0, self.tempo_std)
                     delta_tempo = min(max(-self.max_tempo, delta_tempo), self.max_tempo)
                 stream = repitch(
-                    stream,
-                    delta_pitch,
-                    delta_tempo,
-                    voice=idx in self.vocals)
+                    stream, delta_pitch, delta_tempo, voice=idx in self.vocals
+                )
                 outs.append(stream[:, :out_length])
             streams = torch.stack(outs)
         else:
@@ -66,7 +73,7 @@ def repitch(wav, pitch, tempo, voice=False, quick=False, samplerate=44100):
     """
     infile = tempfile.NamedTemporaryFile(suffix=".wav")
     outfile = tempfile.NamedTemporaryFile(suffix=".wav")
-    save_audio(wav, infile.name, samplerate, clip='clamp')
+    save_audio(wav, infile.name, samplerate, clip="clamp")
     command = [
         "soundstretch",
         infile.name,
@@ -81,7 +88,9 @@ def repitch(wav, pitch, tempo, voice=False, quick=False, samplerate=44100):
     try:
         sp.run(command, capture_output=True, check=True)
     except sp.CalledProcessError as error:
-        raise RuntimeError(f"Could not change bpm because {error.stderr.decode('utf-8')}")
+        raise RuntimeError(
+            f"Could not change bpm because {error.stderr.decode('utf-8')}"
+        )
     wav, sr = ta.load(outfile.name)
     assert sr == samplerate
     return wav
