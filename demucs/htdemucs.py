@@ -315,7 +315,7 @@ class HTDemucs(nn.Module):
                     dconv=dconv_mode & 1,
                     context=context_enc,
                     empty=last_freq,
-                    **kwt
+                    **kwt,
                 )
                 self.tencoder.append(tenc)
 
@@ -333,7 +333,7 @@ class HTDemucs(nn.Module):
                 dconv=dconv_mode & 2,
                 last=index == 0,
                 context=context,
-                **kw_dec
+                **kw_dec,
             )
             if multi:
                 dec = MultiWrap(dec, multi_freqs)
@@ -345,7 +345,7 @@ class HTDemucs(nn.Module):
                     empty=last_freq,
                     last=index == 0,
                     context=context,
-                    **kwt
+                    **kwt,
                 )
                 self.tdecoder.insert(0, tdec)
             self.decoder.insert(0, dec)
@@ -438,8 +438,10 @@ class HTDemucs(nn.Module):
         x = pad1d(x, (pad, pad + le * hl - x.shape[-1]), mode="reflect")
 
         if self.onnx_exportable:
-            z = spectro(x, nfft, hl, onnx_exportable=True)[..., :-1, :, :]    # adding one more dimension
-            assert z.shape[-2] == le + 4, (z.shape, x.shape, le) # from -1 to -2
+            z = spectro(x, nfft, hl, onnx_exportable=True)[
+                ..., :-1, :, :
+            ]  # adding one more dimension
+            assert z.shape[-2] == le + 4, (z.shape, x.shape, le)  # from -1 to -2
             z = z[..., 2: 2 + le, :]  # adding one more dimension
         else:
             z = spectro(x, nfft, hl)[..., :-1, :]
@@ -467,7 +469,7 @@ class HTDemucs(nn.Module):
         if self.cac:
             if self.onnx_exportable:
                 B, C, Fr, T, dim = z.shape  # dim should be 2, adding one more dimension
-                m = z.permute(0, 1, 4, 2, 3) # torch.view_as_real(z) changed to z 
+                m = z.permute(0, 1, 4, 2, 3)  # torch.view_as_real(z) changed to z
             else:
                 B, C, Fr, T = z.shape
                 m = torch.view_as_real(z).permute(0, 1, 4, 2, 3)
@@ -476,7 +478,7 @@ class HTDemucs(nn.Module):
             real = z[..., 0]
             imag = z[..., 1]
             m = torch.sqrt(real**2 + imag**2)  # for magnitude
-        else:         
+        else:
             m = z.abs()
         return m
 
@@ -490,7 +492,9 @@ class HTDemucs(nn.Module):
             if self.onnx_exportable:
                 out = out.contiguous()  # out shape is (B, S, -1, Fr, T, 2) shape
             else:
-                out = torch.view_as_complex(out.contiguous())   # out shape is (B, S, -1, Fr, T)  (complex)
+                out = torch.view_as_complex(
+                    out.contiguous()
+                )  # out shape is (B, S, -1, Fr, T)  (complex)
             return out
         # TODO: Modify all the below paths for the new shape
         if self.training:
@@ -544,8 +548,9 @@ class HTDemucs(nn.Module):
         training_length = int(self.segment * self.samplerate)
         if training_length < length:
             raise ValueError(
-                    f"Given length {length} is longer than "
-                    f"training length {training_length}")
+                f"Given length {length} is longer than "
+                f"training length {training_length}"
+            )
         return training_length
 
     def forward(self, mix):
