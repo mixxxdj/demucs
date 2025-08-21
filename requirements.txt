@@ -10,6 +10,7 @@ lameenc>=1.2
 museval
 mypy
 openunmix
+pytest
 pyyaml
 submitit
 torch>=2.1.2
