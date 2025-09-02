@@ -57,7 +57,7 @@ class BagOfModels(nn.Module):
         self.audio_channels = first.audio_channels
         self.samplerate = first.samplerate
         self.sources = first.sources
-        self.models = nn.ModuleList(models)
+        self.models = tp.cast(tp.List[Model], nn.ModuleList(models))
 
         if weights is None:
             weights = [[1. for _ in first.sources] for _ in models]
@@ -142,7 +142,7 @@ def _replace_dict(_dict: tp.Optional[dict], *subs: tp.Tuple[tp.Hashable, tp.Any]
     return _dict
 
 
-def apply_model(model: tp.Union[BagOfModels, Model],
+def apply_model(model: tp.Union[BagOfModels, Demucs, HDemucs, HTDemucs],
                 mix: tp.Union[th.Tensor, TensorChunk],
                 shifts: int = 1, split: bool = True,
                 overlap: float = 0.25, transition_power: float = 1.,
