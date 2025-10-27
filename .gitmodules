@@ -1,0 +1,6 @@
+[submodule "cppscripts/dependencies/eigen"]
+	path = cppscripts/dependencies/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "cppscripts/dependencies/libnyquist"]
+	path = cppscripts/dependencies/libnyquist
+	url = https://github.com/ddiakopoulos/libnyquist.git
