@@ -48,7 +48,7 @@ if __name__ == '__main__':
         torch.onnx.export(
             core_model,
             dummy_input,
-            onnx_file_path,
+            str(onnx_file_path),
             export_params=True,
             opset_version=17,
             do_constant_folding=True,
